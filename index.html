@@ -2845,7 +2845,7 @@
                         //const prioritySum = Object.values(priorities).reduce((prev,curr) => curr+prev, 0);
                         // <!-- ~ Return a color from the scale based on the normalized distance from the ideal value.
                         if (barsMetric === "Distance"){
-                            result = result = maxDistance !== 0 ? 1 - distance / maxDistance : 0;
+                            result = maxDistance !== 0 ? (1 - distance / maxDistance)*100 : 0;
                         }
                         // <!-- ~ Return a color from the scale based on the priority value.
                         else if (barsMetric === "Priority"){
@@ -2876,7 +2876,7 @@
                             var result;
                             // <!-- ~ Return a color from the scale based on the normalized distance from the ideal value.
                             if(barsMetric === "Distance"){
-                                result = maxDistance !== 0 ? 1 - distance / maxDistance : 0;
+                                result = maxDistance !== 0 ? (1 - distance / maxDistance)*100 : 0;
                                 //const prioritySum = Object.values(priorities).reduce((prev,curr) => curr+prev, 0);
                             }
                             // <!-- ~ Return a color from the scale based on the priority value.
@@ -2941,9 +2941,10 @@
                     }
                     // <!-- ~ Return a color from the scale based on the a normalized product of the distance from the ideal and priority.
                     else if(opacityMetric === "DistanceXPriority"){
-                        result = 0.75 * (1 - ((distance * 100) / (maxDistance * priorities[d.column]))) + 0.25;
+                        result = (maxDistance * priorities[d.column]) !== 0 ? 0.75 * (1 - ( (distance * 100) / (maxDistance * priorities[d.column]))) + 0.25 : 0.25;
+                        console.log(result)
                     }else{
-                        result = 0 ;
+                        result = 0.25 ;
                     }
                     return result
                 }else{
