@@ -75,6 +75,13 @@
             border-style: double;
         }
 
+        .min-range{
+            display: none;
+        }
+        .max-range{
+            display: none;
+        }
+
         
         .cell-label {
             position: absolute;
@@ -439,7 +446,7 @@
                 // Add label activate/deactivate TOff Priority Mode
                 check3.append("label")
                     .attr("for", "activateTOffPriorityMode")
-                    .text("Activate TOff Priority Mode");
+                    .text("Activate priority normalization");
                     
 
                 // Add checkboxes to activate/deactivate Scores
@@ -880,8 +887,9 @@
                     tableList[i].mydiv.node().style.zIndex = tableList[i].position["z-index"]
                 }
               
-                updateSliderTable();
+                
                 updateFeaturesCheckboxes();
+                updateSliderTable();
 
                 
 
@@ -940,9 +948,23 @@
                 if (isNumeric) {
                     columnData = columnData.map(val => parseFloat(val)).filter(val => !isNaN(val))
 
-                    var svg = cell.append('svg').attr('width', 100).attr('height', 60).attr("id","hist"+i)
+                    var svg = cell.append('svg').attr('width', 100).attr('height', 100).attr("id","hist"+i)
            
+                    var svgHeight = 100;
+                    var histogramHeight = 60;
+                    var padding = (svgHeight - histogramHeight) / 2;
 
+                    //Append background base
+                    svg.append('rect')
+                        .attr('x', 0)
+                        .attr('y', padding)
+                        .attr('width', 100)
+                        .attr('height', 60)
+                        .attr('fill', '#f1f1f1') // Add white fill for background
+                    // add black boarder
+                        .attr('stroke', 'black') // Add black stroke for border
+
+                    svg.selectAll('rect')
                     // Append background rectangles
                     svg.selectAll('rect.background')
                         .data(hist)
@@ -950,7 +972,7 @@
                         .append('rect')
                         .attr('class', 'background')
                         .attr('x', (d, i) => hist.length ? i * 100 / hist.length : 0)
-                        .attr('y', 0)
+                        .attr('y', padding)
                         .attr('width', hist.length ? 100 / hist.length : 100)
                         .attr('height', 60)
                         
@@ -963,7 +985,7 @@
                     .append('rect')
                     .attr('class', 'data')
                     .attr('x', (d, i) => hist.length ? i * 100 / hist.length : 0)
-                    .attr('y', d => 60 - yScale(d.length))
+                    .attr('y', d => padding + histogramHeight - yScale(d.length))
                     .attr('width', hist.length ? 100 / hist.length : 100)
                     .attr('height', d => yScale(d.length))
                     .attr('stroke', 'black') // Add black stroke for border
@@ -975,12 +997,12 @@
 
                     svg.append('text').attr("class","global-min-range")
                         .attr('x', 0)
-                        .attr('y', 10) // Position the label below the bar
+                        .attr('y', 10) // Position the label above the bar
                         .attr('font-size', '13px')
                         .text(Number.isInteger(minRange) ? minRange : minRange.toFixed(1));
 
                     var maxRangeText = svg.append('text').attr("class","global-max-range")
-                        .attr('y', 10) // Position the label below the bar
+                        .attr('y', 10) // Position the label above the bar
                         .attr('font-size', '13px')
                         .text(Number.isInteger(maxRange) ? maxRange : maxRange.toFixed(1));
                     
@@ -994,13 +1016,13 @@
                         
                     svg.append('text').attr("class","min-range")
                         .attr('x', scale(table.minVal[columnName])) 
-                        .attr('y', 40) // Position the label below the bar
+                        .attr('y', histogramHeight+ padding*2) // Position the label below the bar
                         .attr('font-size', '13px')
                         .text(Number.isInteger(table.minVal[columnName]) ? table.minVal[columnName] : table.minVal[columnName].toFixed(1));
-                    
+                    console.log(columnName ," ", table.maxVal[columnName])
                     svg.append('text').attr("class","max-range")
                         .attr('x', scale(table.maxVal[columnName])) 
-                        .attr('y', 40) // Position the label below the bar
+                        .attr('y', histogramHeight + padding*2) // Position the label below the bar
                         .attr('font-size', '13px')
                         .text(Number.isInteger(table.maxVal[columnName]) ? table.maxVal[columnName] : table.maxVal[columnName].toFixed(1));
                     
@@ -1032,7 +1054,7 @@
                         svg.append('rect')
                             .attr('class', 'histogram-slider')                
                             .attr('x', 0)
-                            .attr('y', 0)
+                            .attr('y', padding)
                             .attr('width', 4)
                             .attr('height', 60)
                             .attr('fill', 'blue')
@@ -1040,6 +1062,21 @@
                                 d3.select(this).style("cursor", "ew-resize");
                             })
                             .call(drag);
+                    }
+                    else{
+                        //add labels for the score 0 1 
+                        svg.append('text').attr("class","Global-min-range")
+                            .attr('x', 0)
+                            .attr('y', 90) // Position the label above the bar
+                            .attr('font-size', '13px')
+                            .text(0);
+                        
+                        svg.append('text').attr("class","Global-max-range")
+                            .attr('x', 100 - textWidth) // Position the label at the last bar, adjusted for the text width
+                            .attr('y', 90) // Position the label above the bar
+                            .attr('font-size', '13px')
+                            .text(1);
+
                     }
 
                 } else {
@@ -1226,13 +1263,19 @@
                     var cell = table.histogramRow.select("#hist"+i);
                         
                     var background = cell.selectAll('rect.background').data(hist); // Bind the bins data to the rectangles
+                    
+                    
+                    var svgHeight = 100;
+                    var histogramHeight = 60;
+                    var padding = (svgHeight - histogramHeight) / 2;
+
 
                     background.enter()
                         .append('rect')
                         .attr('class', 'background')
                         .merge(background) // Merge enter and update selections
                         .attr('x', (d, i) => hist.length ? i * 100 / hist.length : 0)
-                        .attr('y', 0)
+                        .attr('y', padding)
                         .attr('width', hist.length ? 100 / hist.length : 100) // keep same width as the cell
                         .attr('height', 60);
 
@@ -1248,13 +1291,14 @@
                         .attr('class', 'data')
                         .merge(bars) // Merge enter and update selections
                         .attr('x', (d, i) => hist.length ? i * 100 / hist.length : 0)
-                        .attr('y', d => 60 - yScale(d.length))
+                        .attr('y', d => histogramHeight + padding - yScale(d.length))
                         .attr('width', hist.length ? 100 / hist.length : 100) // keep same width as the cell
                         .attr('height', d => yScale(d.length))
                         .attr('stroke', 'black') // Add black stroke for border
                         .attr('stroke-width', 1); // Set the stroke width
 
                     bars.exit().remove();
+                    
 
                     // Update the position of the histogram slider
                     if (columnName !== "Score") {
@@ -1590,17 +1634,6 @@
 
         // <!-- ! Function to update the checkboxes of the slider table
         function updateFeaturesCheckboxes() {
-            // Update activateScores checkbox and run its action
-            d3.select("#activateScores").property("checked", activateScores);
-            resetScoreMinMax();
-            for (let j = 0; j < tableList.length; j++) {
-                updateScores(tableList[j]);
-            }
-            for (let j = 0; j < tableList.length; j++) {
-                updateHistogram(tableList[j]);
-            }
-        
-
             // Update activateHistograms checkbox and run its action
             d3.select("#activateHistograms").property("checked", activateHistograms);
             if (!activateHistograms) {   
@@ -1635,13 +1668,47 @@
                 }
             }
 
+            // Update activateTOffPriorityMode checkbox and run its action
+            d3.select("#activateTOffPriorityMode").property("checked", activateTOffPriorityMode);
+
+
+            // Update activateScores checkbox and run its action
+            d3.select("#activateScores").property("checked", activateScores);
+            resetScoreMinMax();
+            for (let j = 0; j < tableList.length; j++) {
+                updateScores(tableList[j]);
+            }
+            for (let j = 0; j < tableList.length; j++) {
+                updateHistogram(tableList[j]);
+            }
+
             // Update activateColors checkbox and run its action
             d3.select("#activateColors").property("checked", activateColors);
-            
             for (let j = 0; j < tableList.length; j++) {
                 updateColors(tableList[j]);
                 updateHistogramColors(tableList[j]);
             }
+
+            // Update the color Metric dropdown
+            d3.select("#colorMetric").property("value", colorMetric);
+
+            // update activatebars checkbox and run its action
+            d3.select("#activateBars").property("checked", activateBars);
+            for (let j = 0; j < tableList.length; j++) {
+                
+            }
+
+            // Update the bars metric dropdown
+            d3.select("#barsMetric").property("value", barsMetric);
+        
+            //activate opacity
+            d3.select("#activateOpacity").property("checked", activateOpacity);
+
+            // Update the opacity metric dropdown
+            d3.select("#opacityMetric").property("value", opacityMetric);
+
+            // Update histBinFunction dropdown
+            d3.select("#histBinFunction").property("value", histBinFunction);            
             
         }
 
@@ -1850,6 +1917,7 @@
         //<!-- ! Function to update the Sliders in the slider table mostly the priority sliders
         function updateSliderTable() {
             // Update checkboxes based on the includedColumns object
+            // Update the checkboxes for each column
             for (const column in includedColumns) {
                 d3.select(`#checkbox${column}`).property("checked", includedColumns[column]);
             }
@@ -1857,7 +1925,9 @@
             // Update priority sliders and the displayed priority values
             for (const column in priorities) {
                 const slider = d3.select(`#prioritySlider${column}`);
+                console.log("updating slider ", `#prioritySlider${column}`, slider);
                 if (!slider.empty()) {
+                   
                     slider.property("value", priorities[column]);
                     slider.node().nextSibling.textContent = priorities[column].toFixed(2);
                 }
@@ -1867,6 +1937,7 @@
             for (const column in idealValues) {
                 const slider = d3.select(`#IdealSlider${column}`);
                 if (!slider.empty()) {
+                    
                     slider.property("value", idealValues[column]);
                     slider.node().nextSibling.textContent = idealValues[column].toFixed(2);
                 }
@@ -2697,6 +2768,14 @@
                     globalMax["Score"] = row["Score"];
                     table.maxVal["Score"] = row["Score"];
                 }
+
+                // Update the min and max for the "Score" column
+                if (table.minVal["Score"] === undefined || row["Score"] < table.minVal["Score"]) {
+                    table.minVal["Score"] = row["Score"];
+                }
+                if (table.maxVal["Score"] === undefined || row["Score"] > table.maxVal["Score"]) {
+                    table.maxVal["Score"] = row["Score"];
+                }
                
 
                 // Check if the scores are activated
@@ -2780,7 +2859,8 @@
                         }
                         // <!-- ~ Return a color from the scale based on the a normalized product of the distance from the ideal and priority.
                         else if (colorMetric === "DistanceXPriority"){
-                            result = colorScale(1 - (distance * 100) / (maxDistance * priorities[d.column]));
+                            result = maxDistance !== 0 ? colorScale(1 - ((distance/maxDistance)*priorities[d.column])/100) : 0; 
+                            
                         }
                         
 
@@ -2820,7 +2900,7 @@
                     }
                     // <!-- ~ Return a color from the scale based on the normalized distance from the ideal value.
                     else if (colorMetric === "DistanceXPriority"){
-                        result =  colorScale(maxDistance !== 0 ? 1 - (distance*100) / (maxDistance*priorities[d.column]) : 0);       
+                        result =  colorScale(maxDistance !== 0 ? 1 - ((distance/maxDistance)*priorities[d.column])/100 : 0);       
                     }
                     return result;
                     
@@ -2853,7 +2933,7 @@
                         }
                         // <!-- ~ Return a color from the scale based on the a normalized product of the distance from the ideal and priority.
                         else if (barsMetric === "DistanceXPriority"){
-                            result = (1-((distance*100)/(maxDistance*priorities[d.column]))) * 100;
+                            result = maxDistance !== 0 ? (((1-distance/maxDistance)*priorities[d.column])/100) * 100 : 100;
                         }
 
                         return result+"%" ;
@@ -2872,7 +2952,7 @@
                             if(maxDistance === 0){
                                 return 1 ;
                             }
-
+                            console.log( distance, minVal, maxVal, idealValue, maxDistance)
                             var result;
                             // <!-- ~ Return a color from the scale based on the normalized distance from the ideal value.
                             if(barsMetric === "Distance"){
@@ -2885,7 +2965,9 @@
                             }
                             // <!-- ~ Return a color from the scale based on the a normalized product of the distance from the ideal and priority.
                             else if(barsMetric === "DistanceXPriority"){
-                                result = (1-((distance*100)/(maxDistance*priorities[d.column]))) * 100;
+                                // result should be between 0 and 100 and is the value for the normalized distance from the ideal value times the priority
+                                result = maxDistance !== 0 ? (((1-distance/maxDistance)*priorities[d.column])/100) * 100 : 100;
+                                
                             }else{
                                 result = 0 ;
                             }
@@ -2941,7 +3023,8 @@
                     }
                     // <!-- ~ Return a color from the scale based on the a normalized product of the distance from the ideal and priority.
                     else if(opacityMetric === "DistanceXPriority"){
-                        result = (maxDistance * priorities[d.column]) !== 0 ? 0.75 * (1 - ( (distance * 100) / (maxDistance * priorities[d.column]))) + 0.25 : 0.25;
+                        result = maxDistance  !== 0 ? 0.75 * (1 - ((distance/maxDistance)*priorities[d.column])/100) + 0.25 : 0.25;
+
                         console.log(result)
                     }else{
                         result = 0.25 ;
